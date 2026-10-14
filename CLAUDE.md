@@ -6,15 +6,6 @@ Orientação da Profa. Sílvia C. de Matos Soares.
 
 Repositório: <https://github.com/NicolasML28/PI-VI>.
 
-Este projeto é **escrito do zero**. Do projeto anterior
-(<https://github.com/Lopesloro/radar-de-reclamacoes>, no ar em
-<https://radar-de-reclamacoes-pi6.onrender.com>) vêm só o tema e as ideias:
-ler avaliações públicas, separar por assunto, prever o mês seguinte e sempre
-comparar com um palpite simples. **Nenhum código é copiado de lá.**
-
-A versão nova acrescenta três coisas: o **agente investigador**, o **simulador
-"E se?"** e o **experimento controlado**.
-
 O repositório guarda só código. O plano, a divisão do trabalho (um documento por
 integrante) e os prints ficam fora do git, com a equipe. Se uma dessas pastas
 existir na máquina (`plano/`, `referencia/`, `docs/`), leia antes de começar.
