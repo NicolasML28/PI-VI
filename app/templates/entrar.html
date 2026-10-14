@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="entrada-pagina">
+  <div class="container entrada">
+    <div class="entrada__texto">
+      <p class="sobrelinha">Acesso ao painel</p>
+      <h1 class="titulo-classico">O painel do seu negócio é só seu</h1>
+      <span class="regua" aria-hidden="true"></span>
+      <p class="lead lead--leitura">
+        A avaliação que seus clientes escrevem é pública, qualquer um lê. Mas a leitura
+        que o sistema faz dela, assunto por assunto e mês a mês, fica guardada atrás de
+        usuário e senha.
+      </p>
+      <p class="lead lead--leitura">
+        Cada negócio enxerga apenas o que é dele. Ninguém de fora vê o seu painel.
+      </p>
+    </div>
+
+    <div class="entrada__caixa">
+      <h2 class="entrada__titulo">Entrar no painel</h2>
+
+      {% if erro == "credencial" %}
+      <p class="aviso-entrada aviso-entrada--erro" role="alert">Usuário ou senha não conferem.</p>
+      {% endif %}
+
+      {# PROVISÓRIO: o token contra CSRF e a sessão entram aqui na Fase 0 do Matheus. #}
+      <form method="post" action="/entrar" class="formulario">
+        <label class="campo-classico">
+          <span class="campo-classico__rotulo">Usuário</span>
+          <input class="campo-classico__entrada" type="text" name="usuario" autocomplete="username"
+                 required value="{{ usuario_demo if senha_e_demo else '' }}">
+        </label>
+        <label class="campo-classico">
+          <span class="campo-classico__rotulo">Senha</span>
+          <input class="campo-classico__entrada" type="password" name="senha" autocomplete="current-password" required>
+        </label>
+        <button class="botao botao--classico botao--largo" type="submit" data-principal>Entrar</button>
+      </form>
+
+      {% if senha_e_demo %}
+      <p class="aviso-entrada aviso-entrada--atencao">
+        Esta é uma versão de demonstração, com negócios e avaliações de exemplo. Entre com
+        <strong>{{ usuario_demo }}</strong> e a senha <strong>admin</strong> para conhecer as telas.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}O que vem por aí, {{ negocio.nome }}{% endblock %}
+
+{% block conteudo %}
+{% set corrente = serie.previsoes[0] %}
+{% set proximo = serie.previsoes[1] %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.seletor(negocios, negocio.empresa_id, "/previsao", "?categoria=" ~ escolhida) }}
+    {{ m.cabeca("O que vem por aí: " ~ (escolhida | assunto),
+                "Quantas reclamações de " ~ (escolhida | assunto) ~ " devem chegar em " ~ negocio.nome ~ " este mês e no próximo.") }}
+    {{ m.abas_assunto(categorias_disponiveis, escolhida, "/previsao/" ~ negocio.empresa_id ~ "?categoria=") }}
+
+    {% if alerta %}
+    <div class="aviso aviso--{{ estados[alerta.estado].classe }}">
+      {{ m.semaforo(alerta.estado) }}
+      <p>{{ escolhida | com_artigo | capitalize }} deve crescer. Vale descobrir por quê.</p>
+    </div>
+    {% endif %}
+
+    {{ m.grafico(frase, grafico,
+        ["As colunas cinza são os meses que já terminaram, com o número de reclamações em cima.",
+         "Em " ~ (corrente.mes | mes_longo) ~ ", a parte cinza é o que já chegou até hoje. A parte tracejada é o que ainda deve chegar até o fim do mês.",
+         "As colunas da direita são estimativas. O número com ≈ é o mais provável; embaixo dele, o mínimo e o máximo esperados.",
+         "A faixa clara em volta da coluna mostra esse mínimo e máximo. Quanto mais longe o mês, mais larga ela fica."],
+        ["Mês", "Reclamações", "Situação"], tabela) }}
+
+    <div class="numeros">
+      {{ m.numero("Último mês fechado", "mes_fechado", serie.ultimo, serie.meses[-1][0] | mes_longo) }}
+      {{ m.numero("Até hoje", "mes_andamento", serie.parcial[1], "em " ~ (corrente.mes | mes_longo) ~ ", que ainda não acabou") }}
+      {{ m.numero("Deve fechar em", "estimativa", "≈ " ~ corrente.p50, "entre " ~ corrente.p10 ~ " e " ~ corrente.p90) }}
+      {{ m.numero("Em " ~ (proximo.mes | mes_longo), "minimo_maximo", "≈ " ~ proximo.p50, "entre " ~ proximo.p10 ~ " e " ~ proximo.p90) }}
+    </div>
+
+    {% set botoes = [] %}
+    {% if alerta %}{% set botoes = botoes + [{"rotulo": "Por que isso está acontecendo?", "href": "/investigacao/" ~ negocio.empresa_id ~ "/" ~ escolhida}] %}{% endif %}
+    {% set botoes = botoes + [
+      {"rotulo": "E se eu mudar algo?", "href": "/simulador/" ~ negocio.empresa_id ~ "?categoria=" ~ escolhida},
+      {"rotulo": "Voltar ao resumo", "href": "/resumo"},
+    ] %}
+    {{ m.proximo_passo(botoes) }}
+  </div>
+</section>
+{% endblock %}

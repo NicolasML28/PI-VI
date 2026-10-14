@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}{{ projeto.nome }}{% endblock %}</title>
+  <meta name="description" content="{{ projeto.resumo }}">
+  <meta name="theme-color" content="#0F6E7B">
+  <link rel="icon" href="/static/icone.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital@0;1&family=Playfair+Display:wght@400;600&display=swap">
+  <link rel="stylesheet" href="/static/css/app.css?v={{ impressao }}">
+  <script src="/static/js/inicio.js?v={{ impressao }}"></script>
+</head>
+<body class="{% block corpo %}{% endblock %}">
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo {% block topo_classe %}{% endblock %}">
+    <div class="container topo__linha">
+      <a class="marca" href="{{ '/resumo' if usuario else '/' }}">{{ projeto.nome }}</a>
+
+      {% if usuario %}
+      <nav class="menu" aria-label="Principal">
+        <ul class="menu__lista">
+          {% for item in menu %}
+          <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}{% if item.id == 'ajuda' %} data-tour="5"{% endif %}>{{ item.rotulo }}</a></li>
+          {% endfor %}
+          <li>
+            <details class="menu__mais" data-fecha-fora>
+              <summary{% if ativo in ['confianca', 'o-que-falta', 'sobre'] %} class="menu__mais--ativo"{% endif %}>Mais</summary>
+              <ul class="menu__lista-mais">
+                {% for item in menu_mais %}
+                <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a></li>
+                {% endfor %}
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </nav>
+
+      <details class="menu-movel" data-fecha-fora>
+        <summary class="menu-movel__botao">Menu</summary>
+        <nav class="menu-movel__painel" aria-label="Principal no celular">
+          <ul>
+            {% for item in menu + menu_mais %}
+            <li><a href="{{ item.href }}"{% if item.id == ativo %} aria-current="page"{% endif %}>{{ item.rotulo }}</a></li>
+            {% endfor %}
+          </ul>
+        </nav>
+      </details>
+      {% else %}
+      <a class="botao botao--mini" href="/entrar">Entrar</a>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if usuario and demonstracao %}
+  <div class="faixa-demo" role="note">
+    <div class="container">
+      Você está vendo <strong>negócios de demonstração</strong>: as avaliações e os números são de mentira, para mostrar como o sistema funciona.
+    </div>
+  </div>
+  {% endif %}
+
+  <main id="conteudo" tabindex="-1">
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">
+    <div class="container rodape__grade">
+      <div>
+        <p class="rodape__marca">{{ projeto.nome }}</p>
+        <p class="rodape__texto">{{ projeto.resumo }}</p>
+      </div>
+      <div>
+        <p class="rodape__titulo">Navegar</p>
+        <ul class="rodape__lista">
+          {% if usuario %}
+          {% for item in menu + menu_mais %}<li><a href="{{ item.href }}">{{ item.rotulo }}</a></li>{% endfor %}
+          {% else %}
+          <li><a href="/entrar">Entrar</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    <div class="container rodape__base">
+      <p>Nenhuma avaliação mostrada aqui foi escrita por um cliente de verdade.</p>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js?v={{ impressao }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

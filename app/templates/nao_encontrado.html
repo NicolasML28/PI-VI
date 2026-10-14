@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block titulo %}Página não encontrada, {{ projeto.nome }}{% endblock %}
+
+{% block conteudo %}
+<section class="secao secao--topo">
+  <div class="container">
+    {{ m.cabeca("Essa página não existe", "O endereço pode estar errado, ou o negócio não faz parte da demonstração.") }}
+    {{ m.estado_vazio("Volte ao resumo para ver os negócios disponíveis.", {"rotulo": "Ir para o resumo", "href": "/resumo"}) }}
+  </div>
+</section>
+{% endblock %}
