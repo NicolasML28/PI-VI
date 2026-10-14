@@ -9,8 +9,8 @@ Orientação da Profa. Sílvia C. de Matos Soares.
 
 Repositório: <https://github.com/NicolasML28/PI-VI>.
 
-O plano completo está em [`plano/`](plano/00-visao-geral.md), e as regras do
-repositório em [`CLAUDE.md`](CLAUDE.md).
+As regras do repositório estão em [`CLAUDE.md`](CLAUDE.md). O plano e a divisão do
+trabalho ficam fora do git, com a equipe.
 
 ## O que já funciona
 
@@ -76,7 +76,7 @@ python -m pytest -m e2e -q
 ```
 
 No Windows dá para usar o Edge, sem baixar nada: `python -m pytest -m e2e --browser-channel msedge`.
-Os prints de cada tela ficam em `docs/evidencias/telas/`.
+Os prints de cada tela ficam em `docs/evidencias/telas/`, só na máquina (fora do git).
 
 ## Telas
 
@@ -112,6 +112,4 @@ app/
   seguranca/                                                           (Matheus)
 tests/              testes do código e das telas
 tests/e2e/          testes no navegador
-plano/              o plano do semestre, um arquivo por pessoa
-referencia/         prints da versão anterior
 ```

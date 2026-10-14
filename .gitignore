@@ -23,3 +23,8 @@ playwright-report/
 .idea/
 .vscode/
 .claude/
+
+# Documentação e prints: ficam só na máquina, fora do GitHub
+plano/
+referencia/
+docs/

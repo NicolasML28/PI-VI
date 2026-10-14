@@ -10,15 +10,14 @@ Este projeto é **escrito do zero**. Do projeto anterior
 (<https://github.com/Lopesloro/radar-de-reclamacoes>, no ar em
 <https://radar-de-reclamacoes-pi6.onrender.com>) vêm só o tema e as ideias:
 ler avaliações públicas, separar por assunto, prever o mês seguinte e sempre
-comparar com um palpite simples. **Nenhum código é copiado de lá.** Os prints da
-versão anterior ficam em `referencia/site-atual/`, como referência do que manter
-e do que melhorar.
+comparar com um palpite simples. **Nenhum código é copiado de lá.**
 
 A versão nova acrescenta três coisas: o **agente investigador**, o **simulador
-"E se?"** e o **experimento controlado**. O plano completo está em
-`plano/00-visao-geral.md`. O começo do projeto é feito pelo prompt de
-`plano/04-prompt-inicio.md`. Depois dele, cada integrante segue o próprio
-arquivo: `plano/01-gabriel.md`, `plano/02-matheus.md` e `plano/03-nicolas.md`.
+"E se?"** e o **experimento controlado**.
+
+O repositório guarda só código. O plano, a divisão do trabalho (um documento por
+integrante) e os prints ficam fora do git, com a equipe. Se uma dessas pastas
+existir na máquina (`plano/`, `referencia/`, `docs/`), leia antes de começar.
 
 ## Quem é dono do quê
 
