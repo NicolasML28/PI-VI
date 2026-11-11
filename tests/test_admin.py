@@ -224,3 +224,155 @@ def test_a_trilha_do_cliente_grava_o_identificador_e_nao_o_nome_de_entrada(clien
             modelo.Classificacao.avaliacao_id == identificador,
             modelo.Classificacao.motivo_sem_assunto == "conferida pelo dono"))
         assert marcada is not None and marcada.categoria_id == "demora"
+
+
+# ------------------------------------------------------------ apagar cliente
+
+def test_apagar_cliente_leva_tudo_que_e_dele(equipe):
+    """A cascata é do banco, então nada fica órfão quando a empresa sai."""
+    equipe.post("/admin/clientes", data={
+        "csrf": _token(equipe), "identificador": "apagar-teste", "nome": "Para Apagar",
+        "negocio_nome": "Loja", "ramo": "Teste", "cidade": "Campinas, SP",
+        "entrada": "apagar-teste",
+    }, follow_redirects=False)
+    conteudo = "id;data;nota;comentario\n" + "\n".join(
+        f"a{n};0{1 + n % 9}/10/2026;1;Esperei muito tempo" for n in range(1, 6))
+    equipe.post("/admin/importar", data={
+        "csrf": _token(equipe, "/admin/fontes"),
+        "comercio_id": "apagar-teste-1", "conteudo_do_arquivo": conteudo,
+    }, follow_redirects=False)
+
+    with banco.Sessao() as sessao:
+        assert sessao.query(modelo.Avaliacao).filter(
+            modelo.Avaliacao.empresa_id == "apagar-teste").count() == 5
+
+    resposta = equipe.post("/admin/clientes/apagar-teste/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/apagar-teste"), "confirmacao": "apagar-teste",
+    }, follow_redirects=False)
+    assert resposta.status_code == 303
+    assert "recado=" in resposta.headers["location"]
+
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "apagar-teste") is None
+        for tabela in (modelo.Comercio, modelo.Usuario, modelo.Avaliacao,
+                       modelo.Classificacao, modelo.SerieMensal, modelo.ExecucaoColeta):
+            sobrou = sessao.query(tabela).filter(tabela.empresa_id == "apagar-teste").count()
+            assert sobrou == 0, f"sobrou linha em {tabela.__tablename__}"
+        # A trilha do apagamento fica, na empresa da equipe.
+        linha = sessao.scalar(select(modelo.Auditoria).where(
+            modelo.Auditoria.acao == "empresa_apagada",
+            modelo.Auditoria.objeto == "apagar-teste"))
+        assert linha is not None and linha.empresa_id == "radar"
+        assert "5 avaliações" in (linha.detalhe or "")
+
+
+def test_apagar_sem_escrever_o_identificador_nao_apaga(equipe):
+    """Botão de apagar sem confirmação escrita é acidente esperando a hora."""
+    resposta = equipe.post("/admin/clientes/patinhas/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/patinhas"), "confirmacao": "patinha",
+    }, follow_redirects=False)
+    assert "erro=" in resposta.headers["location"]
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "patinhas") is not None
+
+
+def test_a_empresa_da_propria_equipe_nao_se_apaga(equipe):
+    """Apagar a empresa da equipe apagaria a conta de administrador junto."""
+    resposta = equipe.post("/admin/clientes/radar/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/radar"), "confirmacao": "radar",
+    }, follow_redirects=False)
+    assert "erro=" in resposta.headers["location"]
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "radar") is not None
+
+
+def test_o_cliente_nao_apaga_ninguem(cliente):
+    token = re.search(r'name="csrf" value="([^"]+)"',
+                      cliente.get("/configuracao").text).group(1)
+    resposta = cliente.post("/admin/clientes/patinhas/apagar", data={
+        "csrf": token, "confirmacao": "patinhas",
+    }, follow_redirects=False)
+    assert resposta.status_code == 403
+    with banco.Sessao() as sessao:
+        assert sessao.get(modelo.Empresa, "patinhas") is not None
+
+
+def test_importacao_grande_passa_e_formulario_comum_nao(equipe):
+    """Defeito real de produção: 450 avaliações de 15 meses passam de 64 KiB.
+
+    Com o limite único de formulário, a importação era recusada com 413 e o
+    operador via a tela voltar sem recado nenhum. O limite passou a ser por
+    caminho: 64 KiB no geral, 2 MiB na importação.
+    """
+    equipe.post("/admin/clientes", data={
+        "csrf": _token(equipe), "identificador": "grande-teste", "nome": "Arquivo Grande",
+        "negocio_nome": "Loja", "ramo": "Teste", "cidade": "Campinas, SP",
+        "entrada": "grande-teste",
+    }, follow_redirects=False)
+
+    linhas = ["id;data;nota;comentario"]
+    for n in range(1, 451):
+        linhas.append(f"g{n};{1 + n % 28:02d}/{1 + n % 12:02d}/2026;1;"
+                      f"Esperei muito tempo para ser atendido e ninguem avisou nada")
+    conteudo = "\n".join(linhas)
+    assert len(conteudo.encode()) > 24_000, "o arquivo do teste precisa ser grande"
+
+    resposta = equipe.post("/admin/importar", data={
+        "csrf": _token(equipe, "/admin/fontes"),
+        "comercio_id": "grande-teste-1", "conteudo_do_arquivo": conteudo,
+    }, follow_redirects=False)
+    assert resposta.status_code == 303, f"a importação foi recusada: {resposta.status_code}"
+    assert "recado=" in resposta.headers["location"]
+    with banco.Sessao() as sessao:
+        assert sessao.query(modelo.Avaliacao).filter(
+            modelo.Avaliacao.empresa_id == "grande-teste").count() == 450
+
+    # O limite do formulário comum continua valendo: 64 KiB num campo de texto
+    # qualquer é tentativa de encher a memória do serviço.
+    gigante = "x" * (70 * 1024)
+    recusada = equipe.post("/configuracao/aviso", data={
+        "csrf": _token(equipe, "/admin/fontes"), "email_aviso": gigante,
+    }, follow_redirects=False)
+    assert recusada.status_code == 413
+
+    equipe.post("/admin/clientes/grande-teste/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/grande-teste"),
+        "confirmacao": "grande-teste",
+    }, follow_redirects=False)
+
+
+def test_cliente_novo_le_que_falta_avaliacao_e_nao_que_falta_negocio(equipe, anonimo):
+    """Defeito real de produção: `comercios()` devolve só quem tem mês fechado.
+
+    Um cliente recém-cadastrado caía no texto "Ainda não há negócio ligado à sua
+    conta", que era falso: o negócio dele estava ligado e só faltavam as
+    avaliações chegarem. Duas situações diferentes pedem dois textos diferentes.
+    """
+    import re as _re
+
+    from tests.conftest import SENHA
+
+    equipe.post("/admin/clientes", data={
+        "csrf": _token(equipe), "identificador": "novo-teste", "nome": "Recem Cadastrado",
+        "negocio_nome": "Loja Nova", "ramo": "Teste", "cidade": "Campinas, SP",
+        "entrada": "novo-teste",
+    }, follow_redirects=False)
+    # A senha sorteada não serve para entrar no teste; troco pelo hash conhecido.
+    from app.seguranca import senha as _senha
+
+    with banco.Sessao() as sessao:
+        conta = sessao.scalar(select(modelo.Usuario).where(
+            modelo.Usuario.email == "novo-teste"))
+        conta.senha_hash = _senha.gerar_hash(SENHA)
+        sessao.commit()
+
+    token = _re.search(r'name="csrf" value="([^"]+)"', anonimo.get("/entrar").text).group(1)
+    anonimo.post("/entrar", data={"usuario": "novo-teste", "senha": SENHA, "csrf": token})
+    html = anonimo.get("/resumo", follow_redirects=True).text
+    assert "Loja Nova" in html, "o negócio cadastrado precisa aparecer na tela do vazio"
+    assert "Ainda não há negócio ligado" not in html
+    assert "avaliações ainda não chegaram" in html
+
+    equipe.post("/admin/clientes/novo-teste/apagar", data={
+        "csrf": _token(equipe, "/admin/clientes/novo-teste"), "confirmacao": "novo-teste",
+    }, follow_redirects=False)
